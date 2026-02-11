@@ -141,8 +141,8 @@ def find_breakeven_year(
     """
     Find the first year where personal investment beats Keren Hishtalmut.
     
-    Note: Cannot withdraw from Keren before lockup period, so comparison 
-    only makes sense after that point.
+    Personal investment scenario: Keep money in Keren until lockup, then withdraw
+    and invest personally from that point forward.
 
     Args:
         principal: Initial investment amount
@@ -156,16 +156,36 @@ def find_breakeven_year(
     Returns:
         First year where personal FV (after tax) >= Keren FV, or None if never
     """
-    # Start checking from the lockup year onwards
-    start_year = max(1, keren_lockup_years)
+    # Get Keren value at lockup (what you'd withdraw)
+    keren_at_lockup = calculate_keren_fv(
+        principal, keren_net_return, keren_lockup_years, monthly_contribution
+    )
     
-    for year in range(start_year, max_years + 1):
+    # Start checking from year after lockup
+    for year in range(keren_lockup_years + 1, max_years + 1):
+        # Option A: Stay in Keren
         keren_fv = calculate_keren_fv(principal, keren_net_return, year, monthly_contribution)
-        personal_fv = calculate_personal_fv_aftertax(
-            principal, personal_return, year, tax_rate, monthly_contribution
+        
+        # Option B: Withdrew at lockup, invested personally since then
+        years_since_lockup = year - keren_lockup_years
+        
+        # Withdrawn lump sum growth
+        lump_sum_pretax = calculate_personal_fv_pretax(
+            keren_at_lockup, personal_return, years_since_lockup, 0
         )
+        lump_sum_gain = lump_sum_pretax - keren_at_lockup
+        lump_sum_aftertax = keren_at_lockup + lump_sum_gain * (1 - tax_rate)
+        
+        # New contributions since lockup
+        contributions_aftertax = calculate_personal_fv_aftertax(
+            0, personal_return, years_since_lockup, tax_rate, monthly_contribution
+        )
+        
+        personal_fv = lump_sum_aftertax + contributions_aftertax
+        
         if personal_fv >= keren_fv:
             return year
+    
     return None
 
 
@@ -199,6 +219,9 @@ def calculate_required_return(
 def run_comparison(inputs: InvestmentInputs) -> ComparisonResult:
     """
     Run a complete comparison between Keren Hishtalmut and personal investment.
+    
+    Critical: During lockup period, money MUST stay in Keren. Personal investment
+    option means withdrawing at lockup end and then investing personally.
 
     Args:
         inputs: All input parameters for the comparison
@@ -208,26 +231,58 @@ def run_comparison(inputs: InvestmentInputs) -> ComparisonResult:
     """
     keren_net_return = inputs.get_keren_net_return()
     personal_effective_return = inputs.get_personal_effective_return()
+    lockup = inputs.keren_lockup_years
 
     yearly_results: list[YearlyResult] = []
     breakeven_year: Optional[int] = None
+    
+    # Calculate Keren value at lockup (for personal investment withdrawal scenario)
+    keren_at_lockup = calculate_keren_fv(
+        inputs.principal, keren_net_return, lockup, inputs.monthly_contribution
+    )
 
     for year in range(1, inputs.horizon_years + 1):
+        # Option A: Keep in Keren for all years
         keren_fv = calculate_keren_fv(
             inputs.principal, keren_net_return, year, inputs.monthly_contribution
         )
-        personal_fv_pretax = calculate_personal_fv_pretax(
-            inputs.principal, personal_effective_return, year, inputs.monthly_contribution
-        )
-        personal_fv_aftertax = calculate_personal_fv_aftertax(
-            inputs.principal,
-            personal_effective_return,
-            year,
-            inputs.capital_gains_tax,
-            inputs.monthly_contribution,
-        )
+        
+        # Option B: Personal investment scenario
+        if year <= lockup:
+            # Before/at lockup: Money is in Keren (no choice)
+            # So personal option = same as Keren during lockup
+            personal_fv_pretax = keren_fv
+            personal_fv_aftertax = keren_fv  # No tax yet, still in Keren
+        else:
+            # After lockup: Withdrew Keren balance at lockup, now investing personally
+            years_since_lockup = year - lockup
+            
+            # The withdrawn lump sum grows at personal rate
+            lump_sum_pretax = calculate_personal_fv_pretax(
+                keren_at_lockup, personal_effective_return, years_since_lockup, 0
+            )
+            
+            # New monthly contributions since lockup grow at personal rate
+            contributions_pretax = calculate_personal_fv_pretax(
+                0, personal_effective_return, years_since_lockup, inputs.monthly_contribution
+            )
+            
+            personal_fv_pretax = lump_sum_pretax + contributions_pretax
+            
+            # Calculate tax on gains
+            # Lump sum: gain is (current_value - withdrawn_amount)
+            lump_sum_gain = lump_sum_pretax - keren_at_lockup
+            lump_sum_aftertax = keren_at_lockup + lump_sum_gain * (1 - inputs.capital_gains_tax)
+            
+            # Contributions: calculate tax on each contribution's gain
+            contributions_aftertax = calculate_personal_fv_aftertax(
+                0, personal_effective_return, years_since_lockup, 
+                inputs.capital_gains_tax, inputs.monthly_contribution
+            )
+            
+            personal_fv_aftertax = lump_sum_aftertax + contributions_aftertax
 
-        # Keren wins if value is higher, but only meaningful after lockup period
+        # Keren wins if value is higher
         keren_wins = keren_fv > personal_fv_aftertax
 
         yearly_results.append(
@@ -244,7 +299,7 @@ def run_comparison(inputs: InvestmentInputs) -> ComparisonResult:
         if (
             breakeven_year is None
             and not keren_wins
-            and year >= inputs.keren_lockup_years
+            and year > lockup
         ):
             breakeven_year = year
 

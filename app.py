@@ -39,9 +39,15 @@ st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 st.title("Keren Hishtalmut vs Personal Investment")
 st.markdown(
     """
-Compare the long-term financial outcomes of keeping money in **Keren Hishtalmut**
-(Israel's tax-advantaged savings fund) versus withdrawing and investing personally
-in a taxable account.
+Compare the long-term financial outcomes of two strategies:
+
+**Option A:** Keep contributing to Keren Hishtalmut for the entire period
+
+**Option B:** Contribute to Keren during the lockup period (typically 6 years), 
+then withdraw and invest personally going forward
+
+⚠️ **Important:** During the lockup period, money must stay in Keren Hishtalmut. 
+The comparison shows what happens if you withdraw after lockup vs. keeping it in Keren.
 """
 )
 
@@ -81,7 +87,8 @@ with col3:
     st.metric(
         label="Personal Value at Horizon",
         value=format_currency(result.final_personal_fv),
-        delta=format_percentage(result.personal_effective_return) + " return",
+        delta=format_percentage(result.personal_effective_return) + " return (after lockup)",
+        help=f"Withdrew at year {inputs.keren_lockup_years} and invested personally since then",
     )
 
 with col4:
