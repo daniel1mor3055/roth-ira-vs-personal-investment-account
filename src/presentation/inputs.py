@@ -124,8 +124,8 @@ def render_sidebar_inputs() -> InvestmentInputs:
         "Keren Lockup Period (Years)",
         min_value=1,
         max_value=10,
-        value=6,
-        help="Years before Keren funds can be withdrawn (typically 6 years in Israel)",
+        value=8,
+        help="Years before Keren funds can be withdrawn (typically 8 years in Israel)",
     )
 
     return InvestmentInputs(
