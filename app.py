@@ -43,7 +43,7 @@ Compare the long-term financial outcomes of two strategies:
 
 **Option A:** Keep contributing to Keren Hishtalmut for the entire period
 
-**Option B:** Contribute to Keren during the lockup period (typically 8 years), 
+**Option B:** Contribute to Keren during the lockup period (typically 10 years), 
 then withdraw and invest personally going forward
 
 ⚠️ **Important:** During the lockup period, money must stay in Keren Hishtalmut. 
