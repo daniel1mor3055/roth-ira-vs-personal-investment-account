@@ -151,7 +151,7 @@ def create_sensitivity_heatmap(
     monthly_contribution: float = 0,
     personal_returns: Optional[list[float]] = None,
     tax_rates: Optional[list[float]] = None,
-    keren_lockup_years: int = 8,
+    keren_lockup_years: int = 10,
 ) -> go.Figure:
     """
     Create a heatmap showing breakeven years for different parameter combinations.
