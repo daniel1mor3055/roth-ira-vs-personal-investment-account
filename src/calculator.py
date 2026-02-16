@@ -136,7 +136,7 @@ def find_breakeven_year(
     tax_rate: float,
     monthly_contribution: float = 0,
     max_years: int = 100,
-    keren_lockup_years: int = 8,
+    keren_lockup_years: int = 15,
 ) -> Optional[int]:
     """
     Find the first year where personal investment beats Keren Hishtalmut.
@@ -151,7 +151,7 @@ def find_breakeven_year(
         tax_rate: Capital gains tax rate
         monthly_contribution: Monthly contribution amount
         max_years: Maximum years to search
-        keren_lockup_years: Years before Keren can be withdrawn (default 8)
+        keren_lockup_years: Years before Keren can be withdrawn (default 15)
 
     Returns:
         First year where personal FV (after tax) >= Keren FV, or None if never
@@ -345,7 +345,7 @@ def generate_sensitivity_matrix(
     tax_rates: list[float],
     monthly_contribution: float = 0,
     max_years: int = 50,
-    keren_lockup_years: int = 8,
+    keren_lockup_years: int = 15,
 ) -> pd.DataFrame:
     """
     Generate a sensitivity matrix showing breakeven years for different

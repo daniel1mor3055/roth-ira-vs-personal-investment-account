@@ -18,7 +18,7 @@ class InvestmentInputs:
     annual_tax_drag: float  # Annual tax drag from dividends/rebalancing (e.g., 0.003 for 0.3%)
     include_tax_drag: bool  # Whether to include tax drag in calculations
     horizon_years: int  # Investment time horizon in years
-    keren_lockup_years: int  # Years before Keren can be withdrawn (typically 6)
+    keren_lockup_years: int  # Years before Keren can be withdrawn (typically 15)
 
     def get_keren_net_return(self) -> float:
         """Calculate the net return for Keren Hishtalmut after management fees."""
